@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify, render_template
 import anthropic
 
 # inicializa o app Flask e o cliente da Anthropic
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 # banco de dados de plantas
