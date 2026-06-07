@@ -139,6 +139,5 @@ Responda sempre em português, de forma simpática e prática.",
     # retorna a resposta e o histórico atualizado para o navegador
     return jsonify({"resposta": texto, "historico": historico})
 
-# inicia o servidor
-if __name__ == "__main__":
-    app.run(debug=True)
+# necessário para o Vercel — expõe o app como função serverless
+app = app
