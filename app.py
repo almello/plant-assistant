@@ -81,13 +81,34 @@ def index():
 # rota que recebe a mensagem do usuário e retorna a resposta da Flora
 @app.route("/chat", methods=["POST"])
 def chat():
-    # pega o histórico e a nova mensagem enviados pelo navegador
+     # pega o histórico, mensagem e imagem enviados pelo navegador
     dados = request.json
     historico = dados.get("historico", [])
     pergunta = dados.get("mensagem", "")
+    imagem_base64 = dados.get("imagem", None)
+    imagem_tipo = dados.get("imagemTipo", "image/jpeg")
 
-    # adiciona a pergunta ao histórico
-    historico.append({"role": "user", "content": pergunta})
+    # monta o conteúdo da mensagem — com ou sem imagem
+    if imagem_base64:
+        conteudo = [
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": imagem_tipo,
+                    "data": imagem_base64
+                }
+            },
+            {
+                "type": "text",
+                "text": pergunta if pergunta else "O que você vê nessa planta? Há algum problema?"
+            }
+        ]
+    else:
+        conteudo = pergunta
+
+    # adiciona a mensagem ao histórico
+    historico.append({"role": "user", "content": conteudo})
 
     # primeira chamada à API
     resposta = client.messages.create(

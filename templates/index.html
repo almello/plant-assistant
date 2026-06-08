@@ -97,6 +97,19 @@
         }
 
         #botao:hover { background: #1b4332; }
+
+        #botao-imagem {
+            background: #2d6a4f;
+            color: white;
+            border: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #botao-imagem:hover { background: #1b4332; }
+
     </style>
 </head>
 <body>
@@ -107,19 +120,42 @@
         </div>
         <div id="input-area">
             <input id="input" type="text" placeholder="Pergunte sobre suas plantas..." />
+            <input id="imagem" type="file" accept="image/*" style="display:none" />
+            <button id="botao-imagem" title="Enviar foto">📷</button>
             <button id="botao">Enviar</button>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        let historico = [];
+       let historico = [];
+        let imagemBase64 = null;
+        let imagemTipo = null;
+
+        // abre o seletor de arquivo ao clicar no botão de câmera
+        document.getElementById("botao-imagem").addEventListener("click", () => {
+            document.getElementById("imagem").click();
+        });
+
+        // quando o usuário seleciona uma imagem, converte para base64
+        document.getElementById("imagem").addEventListener("change", (e) => {
+            const arquivo = e.target.files[0];
+            if (!arquivo) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                imagemBase64 = ev.target.result.split(",")[1]; // extrai só o base64
+                imagemTipo = arquivo.type;                      // ex: image/jpeg
+                mensagens.innerHTML += `<div class="mensagem usuario">📷 Imagem carregada — agora faça sua pergunta!</div>`;
+                mensagens.scrollTop = mensagens.scrollHeight;
+            };
+            reader.readAsDataURL(arquivo);
+        });
 
         async function enviar() {
             const input = document.getElementById("input");
             const mensagens = document.getElementById("mensagens");
             const texto = input.value.trim();
-            if (!texto) return;
+            if (!texto && !imagemBase64) return;
 
             mensagens.innerHTML += `<div class="mensagem usuario">${texto}</div>`;
             input.value = "";
@@ -128,12 +164,15 @@
             const resposta = await fetch("/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mensagem: texto, historico: historico })
+               body: JSON.stringify({ mensagem: texto, historico: historico, imagem: imagemBase64, imagemTipo: imagemTipo })
             });
 
             const dados = await resposta.json();
 
             historico = dados.historico;
+            imagemBase64 = null;  // limpa a imagem após enviar
+            imagemTipo = null;
+            document.getElementById("imagem").value = "";
             mensagens.innerHTML += `<div class="mensagem flora">${marked.parse(dados.resposta)}</div>`;
             mensagens.scrollTop = mensagens.scrollHeight;
         }
